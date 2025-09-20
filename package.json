@@ -1,0 +1,61 @@
+{
+  "name": "nestjs-piscina",
+  "version": "1.0.0",
+  "description": "A NestJS library for easy integration with Piscina thread pool",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "engines": {
+    "node": ">=20.x"
+  },
+  "scripts": {
+    "build": "tsup-node",
+    "postbuild": "npm pack",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "test": "jest",
+    "typecheck": "tsc --noEmit",
+    "security-check": "npm audit --audit-level moderate"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "^8.0.0 || ^9.0.0 || ^10.0.0",
+    "@nestjs/core": "^8.0.0 || ^9.0.0 || ^10.0.0",
+    "piscina": "^3.0.0 || ^4.0.0 || ^5.0.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.30.0",
+    "@nestjs/testing": "^10.0.0",
+    "@swc/core": "^1.12.7",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.0.0",
+    "eslint": "^9.30.0",
+    "eslint-config-prettier": "^10.1.5",
+    "jest": "^30.0.3",
+    "prettier": "^3.6.2",
+    "reflect-metadata": "^0.2.2",
+    "rimraf": "^6.0.1",
+    "source-map-support": "^0.5.21",
+    "ts-jest": "^29.4.0",
+    "ts-node": "^10.9.2",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.35.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "nestjs",
+    "piscina",
+    "threads",
+    "worker",
+    "multithreading",
+    "thread-pool"
+  ],
+  "author": "Antonello Fodde <fodde.antonello@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://github.com/anto4de/nestjs-piscina#readme",
+  "bugs": {
+    "url": "https://github.com/anto4de/nestjs-piscina/issues"
+  }
+}

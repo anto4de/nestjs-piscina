@@ -1,0 +1,62 @@
+# Source files
+src/
+test/
+examples/
+
+# Tests and development
+*.spec.ts
+*.test.ts
+jest.config.js
+
+# Development configs
+.eslintrc
+.prettierrc
+tsconfig.json
+
+# Build tools
+tsup.config.ts
+
+# Git files
+.git/
+.gitignore
+
+# Node modules and dependencies
+node_modules/
+
+# Tests and coverage
+/coverage
+/.nyc_output
+
+# OS files
+.DS_Store
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build output (should be excluded from npm package)
+/tmp
+/out-tsc
+
+# Markdown files (except README.md)
+*.md
+!README.md
