@@ -12,11 +12,11 @@
     "dev": "node --loader ts-node/esm/transpile-only src/app.ts"
   },
   "dependencies": {
-    "@nestjs/common": "^10.0.0",
-    "@nestjs/core": "^10.0.0",
-    "@nestjs/platform-express": "^10.0.0",
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/platform-express": "^11.1.6",
     "nestjs-piscina": "../../nestjs-piscina-1.0.0.tgz",
-    "piscina": "^4.0.0",
+    "piscina": "^5.1.3",
     "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
