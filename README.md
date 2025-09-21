@@ -1,5 +1,7 @@
 # NestJS Piscina
 
+<a href="https://www.npmjs.com/package/nestjs-piscina"><img src="https://img.shields.io/npm/v/nestjs-piscina.svg" alt="NPM Version" /></a>
+
 A NestJS library for easy integration with [Piscina](https://github.com/piscinajs/piscina), the fast worker thread pool for Node.js. This library allows you to offload CPU-intensive tasks to worker threads while maintaining the familiar NestJS decorator pattern and dependency injection.
 
 ## Installation
