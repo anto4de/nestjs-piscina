@@ -6,7 +6,7 @@
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "engines": {
-    "node": ">=20.x"
+    "node": ">=18.x"
   },
   "scripts": {
     "build": "tsup-node",
@@ -27,7 +27,7 @@
     "@nestjs/testing": "^11.1.6",
     "@swc/core": "^1.12.7",
     "@types/jest": "^30.0.0",
-    "@types/node": "^20.0.0",
+    "@types/node": "^22.0.0",
     "eslint": "^9.30.0",
     "eslint-config-prettier": "^10.1.5",
     "jest": "^30.0.3",
@@ -55,6 +55,10 @@
   "author": "Antonello Fodde <fodde.antonello@gmail.com>",
   "license": "MIT",
   "homepage": "https://github.com/anto4de/nestjs-piscina#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anto4de/nestjs-piscina.git"
+  },
   "bugs": {
     "url": "https://github.com/anto4de/nestjs-piscina/issues"
   }
