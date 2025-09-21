@@ -307,6 +307,29 @@ This library supports both ESM (ECMAScript Modules) and CJS (CommonJS) module fo
 
 The correct format is automatically selected based on your import style, thanks to the package's `exports` field.
 
+## TypeScript baseUrl
+
+For projects using TypeScript `baseUrl`, configure `NODE_PATH` to resolve paths in worker threads:
+
+```typescript
+// In your module - align NODE_PATH with your tsconfig baseUrl
+PiscinaModule.forRoot({
+  env: {
+    ...process.env,
+    NODE_PATH: process.cwd(), // Adjust path to match your baseUrl setting
+  },
+})
+```
+
+```json
+{
+  "scripts": {
+    "dev": "NODE_PATH=./src node -r ts-node/register/transpile-only -r tsconfig-paths/register src/app.ts",
+    "start": "NODE_PATH=./dist node dist/app.js"
+  }
+}
+```
+
 ## API Reference
 
 ### PiscinaModule
