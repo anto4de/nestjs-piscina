@@ -330,6 +330,24 @@ PiscinaModule.forRoot({
 }
 ```
 
+## Global Modules
+
+If there is a global module, it needs to be explicitly imported as a dependency in the `@PiscinaEnabled()` decorated module, or it won't work in the worker thread.
+
+Worker threads create isolated NestJS application contexts using only the decorated module, without access to the main application's global modules. This means services that depend on global modules (like `ConfigService`, database connections, or other global providers) will fail to resolve in worker threads unless explicitly imported.
+
+```typescript
+@Module({
+  imports: [
+    ConfigModule,     // Must import even if global in main app
+    DatabaseModule,   // Required for database access in worker
+  ],
+  providers: [ComputeService],
+})
+@PiscinaEnabled()
+export class FeatureModule {}
+```
+
 ## API Reference
 
 ### PiscinaModule
