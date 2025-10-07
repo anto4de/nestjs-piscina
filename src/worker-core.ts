@@ -1,5 +1,6 @@
 import {
   ContextIdFactory,
+  DiscoveryModule,
   DiscoveryService,
   ModuleRef,
   NestFactory,
@@ -28,9 +29,12 @@ export async function executeWorkerTask(
   moduleToken: Type,
   providerToken: Type,
   methodName: string,
-  args: unknown[]
+  args: unknown[],
 ): Promise<unknown> {
-  const app = await NestFactory.createApplicationContext(moduleToken);
+  const app = await NestFactory.createApplicationContext({
+    module: moduleToken,
+    imports: [DiscoveryModule],
+  });
 
   const discoveryService = app.get(DiscoveryService);
   const moduleRef = app.get(ModuleRef);

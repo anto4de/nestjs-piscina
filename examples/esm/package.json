@@ -15,7 +15,7 @@
     "@nestjs/common": "^11.1.6",
     "@nestjs/core": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
-    "nestjs-piscina": "../../nestjs-piscina-1.0.0.tgz",
+    "nestjs-piscina": "../../nestjs-piscina.tgz",
     "piscina": "^5.1.3",
     "reflect-metadata": "^0.2.2"
   },

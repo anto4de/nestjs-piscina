@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "tsup-node",
-    "postbuild": "npm pack",
+    "postbuild": "npm pack && mv nestjs-piscina-*.tgz nestjs-piscina.tgz",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "test": "jest",
