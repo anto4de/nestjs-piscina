@@ -1,0 +1,37 @@
+{
+  "name": "nestjs-piscina-image-processing-example",
+  "version": "1.0.0",
+  "description": "Image processing example using nestjs-piscina with Sharp library and worker threads",
+  "type": "module",
+  "main": "dist/main.js",
+  "scripts": {
+    "prebuild": "rimraf dist *.tsbuildinfo",
+    "build": "tsc",
+    "prestart": "npm run build",
+    "start": "NODE_ENV=production node dist/main.js",
+    "dev": "NODE_ENV=development node --loader ts-node/esm/transpile-only src/main.ts"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/platform-express": "^11.1.6",
+    "multer": "^2.0.2",
+    "nestjs-piscina": "file:../../nestjs-piscina-1.0.0.tgz",
+    "piscina": "^5.1.3",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "sharp": "^0.34.4"
+  },
+  "devDependencies": {
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.6.2",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=18.x"
+  },
+  "author": "NestJS Piscina Examples",
+  "license": "MIT"
+}
