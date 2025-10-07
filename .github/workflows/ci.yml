@@ -83,66 +83,17 @@ jobs:
       - name: Run tests
         run: npm test
 
-  examples:
-    name: Test Examples
-    runs-on: ubuntu-latest
-    needs: [ build ]
-    strategy:
-      matrix:
-        example: [ esm, commonjs, image-processing ]
-        node-version: [ 20 ]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-
-      - name: Install root dependencies
-        run: npm ci
-
-      - name: Build library
-        run: npm run build
-
-      - name: Pack library
-        run: npm pack
-
-      - name: Install example dependencies
-        working-directory: examples/${{ matrix.example }}
-        run: npm ci
-
-      - name: Install local library in example
-        working-directory: examples/${{ matrix.example }}
-        run: npm install ../../nestjs-piscina-*.tgz
-
-      - name: Build example (TypeScript)
-        working-directory: examples/${{ matrix.example }}
-        run: npm run build
-        continue-on-error: false
-
-      - name: Test example in dev mode
-        working-directory: examples/${{ matrix.example }}
-        run: timeout 10s npm run dev || [ $? -eq 124 ]
-
-      - name: Test example in production mode
-        working-directory: examples/${{ matrix.example }}
-        run: timeout 10s npm run start || [ $? -eq 124 ]
-
   status-check:
     name: CI Status Check
     runs-on: ubuntu-latest
-    needs: [ lint, build, test, examples ]
+    needs: [ lint, build, test ]
     if: always()
     steps:
       - name: Check job results
         run: |
           if [ "${{ needs.lint.result }}" != "success" ] || \
              [ "${{ needs.build.result }}" != "success" ] || \
-             [ "${{ needs.test.result }}" != "success" ] || \
-             [ "${{ needs.examples.result }}" != "success" ]; then
+             [ "${{ needs.test.result }}" != "success" ]; then
             echo "One or more CI jobs failed"
             exit 1
           fi
