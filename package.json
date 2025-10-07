@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "tsup-node",
-    "postbuild": "npm pack",
+    "postbuild": "npm pack && mv nestjs-piscina-*.tgz nestjs-piscina.tgz",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "test": "jest",
@@ -31,6 +31,7 @@
     "eslint": "^9.30.0",
     "eslint-config-prettier": "^10.1.5",
     "jest": "^30.0.3",
+    "jiti": "^2.6.1",
     "prettier": "^3.6.2",
     "reflect-metadata": "^0.2.2",
     "rimraf": "^6.0.1",

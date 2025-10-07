@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Image Processing with NestJS + Piscina + Sharp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 0.875rem;
+            margin-bottom: 0;
+        }
+
+        .upload-area {
+            border: 2px dashed #667eea;
+            border-radius: 6px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f8f9fa;
+        }
+
+        .upload-area.drag-over {
+            background: #e9ecef;
+            border-color: #764ba2;
+        }
+
+        .operation {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .operation:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .operation h5 {
+            color: #667eea;
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        .params {
+            display: none;
+        }
+
+        .params.show {
+            display: block;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+
+        .btn-gradient:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .card {
+            margin-bottom: 15px;
+        }
+
+        .card-body {
+            padding: 12px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .form-label {
+            font-size: 0.875rem;
+            margin-bottom: 4px;
+        }
+
+        .form-control, .form-select {
+            font-size: 0.875rem;
+            padding: 6px 12px;
+        }
+
+        .btn {
+            font-size: 0.875rem;
+            padding: 6px 12px;
+        }
+
+        .mb-3 {
+            margin-bottom: 10px !important;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+        }
+
+        #preview, #resultImage {
+            max-height: 400px;
+            width: 100%;
+            object-fit: contain;
+            object-position: center;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .processing-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .processing-spinner {
+            text-align: center;
+            color: white;
+        }
+
+        .processing-spinner .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="processing-overlay d-none" id="processingOverlay">
+    <div class="processing-spinner">
+        <div class="spinner"></div>
+        <h4 id="processingText">Processing...</h4>
+        <p class="text-muted small">Using worker threads for optimal performance</p>
+    </div>
+</div>
+<div class="container">
+    <div class="header">
+        <h1>🖼️ Image Processing Demo</h1>
+        <p>Using NestJS + Piscina + Sharp for high-performance image processing in worker threads</p>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-lg-4">
+            <div class="card shadow mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">📤 Upload Image</h5>
+                    <div class="upload-area mb-3" id="uploadArea">
+                        <p class="mb-2">📁 Click to upload or drag and drop an image</p>
+                        <p class="text-muted small">Supports: JPEG, PNG, WebP, GIF, TIFF</p>
+                    </div>
+                    <input accept="image/*" class="d-none" id="fileInput" type="file">
+                </div>
+            </div>
+
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title">🖼️ Original</h5>
+                    <img alt="Preview" class="img-fluid rounded d-none" id="preview">
+                    <p class="text-muted small text-center d-none" id="noImageText">No image uploaded</p>
+
+                    <div class="d-none bg-light p-2 rounded mt-3" id="originalMetadata">
+                        <h6 class="mb-2 small">Image Info</h6>
+                        <div class="row text-center g-2">
+                            <div class="col-3">
+                                <div class="stat-value small" id="origWidth">-</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">Width</div>
+                            </div>
+                            <div class="col-3">
+                                <div class="stat-value small" id="origHeight">-</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">Height</div>
+                            </div>
+                            <div class="col-3">
+                                <div class="stat-value small" id="origFormat">-</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">Format</div>
+                            </div>
+                            <div class="col-3">
+                                <div class="stat-value small" id="origSize">-</div>
+                                <div class="text-muted" style="font-size: 0.7rem;">Size</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title">⚙️ Operations</h5>
+                    <div class="mb-2">
+                        <label class="form-label small">Select Operation</label>
+                        <select class="form-select form-select-sm" id="operationSelect" onchange="changeOperation()">
+                            <option value="">Loading...</option>
+                        </select>
+                    </div>
+                    <div id="operationParams">
+                        <p class="text-muted small">Select an operation to see its parameters</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title">📊 Result</h5>
+                    <div id="resultAlert"></div>
+                    <div class="d-none" id="resultArea">
+                        <img alt="Processed Result" class="img-fluid rounded mb-3" id="resultImage">
+
+                        <div class="bg-light p-2 rounded mb-2">
+                            <h6 class="mb-2 small">Processing Stats</h6>
+                            <div class="row text-center g-2">
+                                <div class="col-3">
+                                    <div class="stat-value small" id="processingTime">-</div>
+                                    <div class="text-muted" style="font-size: 0.7rem;">Total (ms)</div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="stat-value small" id="workerTime">-</div>
+                                    <div class="text-muted" style="font-size: 0.7rem;">Worker (ms)</div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="stat-value small" id="overhead">-</div>
+                                    <div class="text-muted" style="font-size: 0.7rem;">Overhead (ms)</div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="stat-value small" id="sizeChange">-</div>
+                                    <div class="text-muted" style="font-size: 0.7rem;">Size</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-gradient text-white btn-sm flex-grow-1" onclick="downloadImage()">💾
+                                Download
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="useProcessedAsSource()">↻ Reuse
+                            </button>
+                        </div>
+                    </div>
+                    <p class="text-muted small text-center" id="noResultText">Process an image to see results</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    let currentFile = null;
+    let resultBlob = null;
+    let originalImageUrl = null;
+
+    // Load operations from API
+    async function loadOperations() {
+        try {
+            const response = await fetch('/api/image/operations');
+            const data = await response.json();
+            renderOperations(data.operations);
+        } catch (error) {
+            console.error('Failed to load operations:', error);
+        }
+    }
+
+    let originalWidth = 0;
+    let originalHeight = 0;
+
+    function getOperationIcon(opId) {
+        const icons = {
+            'metadata': '📋',
+            'resize': '📐',
+            'grayscale': '⚫',
+            'blur': '🌫️',
+            'sharpen': '🔪',
+            'rotate': '🔄',
+            'flip': '↔️',
+            'flop': '↕️',
+            'modulate': '🎨',
+            'convert': '🔄'
+        };
+        return icons[opId] || '⚙️';
+    }
+
+    function renderOperations(operations) {
+        // Store operations data globally
+        window.operationsData = operations;
+
+        // Populate dropdown
+        const select = document.getElementById('operationSelect');
+        select.innerHTML = operations.map((op, index) => {
+            const icon = getOperationIcon(op.id);
+            return `<option value="${index}">${icon} ${op.name}</option>`;
+        }).join('');
+
+        // Render first operation by default
+        if (operations.length > 0) {
+            renderOperationParams(0);
+        }
+    }
+
+    function changeOperation() {
+        const select = document.getElementById('operationSelect');
+        const index = parseInt(select.value);
+        renderOperationParams(index);
+    }
+
+    function renderOperationParams(index) {
+        const op = window.operationsData[index];
+        if (!op) return;
+
+        const container = document.getElementById('operationParams');
+        const icon = getOperationIcon(op.id);
+
+        // Custom rendering for resize operation
+        if (op.id === 'resize') {
+            container.innerHTML = `
+                <div class="mb-2"><p class="text-muted small mb-2">${op.description}</p></div>
+                <div class="mb-2">
+                    <label class="form-label small">Mode</label>
+                    <select id="resize-mode" class="form-select form-select-sm" onchange="toggleResizeMode()">
+                        <option value="pixels">Pixels</option>
+                        <option value="percentage">Percentage</option>
+                    </select>
+                </div>
+                <div id="resize-pixels-group">
+                    <div class="mb-2">
+                        <label class="form-label small">Width (px) *</label>
+                        <input type="number" id="resize-width" class="form-control form-control-sm" required min="1" oninput="updateResizePreview()">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label small">Height (px) *</label>
+                        <input type="number" id="resize-height" class="form-control form-control-sm" required min="1" oninput="updateResizePreview()">
+                    </div>
+                </div>
+                <div id="resize-percentage-group" class="d-none">
+                    <div class="mb-2">
+                        <label class="form-label small">Scale (%)</label>
+                        <div class="d-flex gap-2 align-items-center">
+                            <input type="range" id="resize-percentage-slider" class="form-range flex-grow-1" value="50" min="1" max="500" oninput="syncPercentageFromSlider()">
+                            <input type="number" id="resize-percentage" class="form-control form-control-sm" style="width: 80px;" value="50" min="1" max="500" oninput="syncPercentageFromInput()">
+                        </div>
+                    </div>
+                    <div class="bg-light p-2 rounded mb-2">
+                        <label class="form-label small fw-bold mb-1" style="color: #667eea;">Result Preview</label>
+                        <div id="resize-preview" class="small text-muted">
+                            Upload an image first
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small">Fit</label>
+                    <select id="resize-fit" class="form-select form-select-sm">
+                        ${['cover', 'contain', 'fill', 'inside', 'outside'].map(opt => `
+                            <option value="${opt}" ${opt === 'cover' ? 'selected' : ''}>${opt}</option>
+                        `).join('')}
+                    </select>
+                </div>
+                <button class="btn btn-gradient text-white w-100 btn-sm" onclick="processImage('resize', event)">
+                    Apply Resize
+                </button>
+            `;
+            return;
+        }
+
+        // Default rendering for other operations
+        container.innerHTML = `
+            <div class="mb-2"><p class="text-muted small mb-2">${op.description}</p></div>
+            ${op.params.map(param => {
+            if (param.type === 'select') {
+                return `
+                        <div class="mb-2">
+                            <label class="form-label small">${param.name}${param.required ? ' *' : ''}</label>
+                            <select id="${op.id}-${param.name}" class="form-select form-select-sm">
+                                ${param.options.map(opt => `
+                                    <option value="${opt}" ${opt === param.default ? 'selected' : ''}>${opt}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                    `;
+            } else if (param.type === 'number' && param.min !== undefined && param.max !== undefined) {
+                const defaultVal = param.default !== undefined ? param.default : (param.min + param.max) / 2;
+                const step = param.max > 100 ? 1 : 0.1;
+                return `
+                        <div class="mb-2">
+                            <label class="form-label small">${param.name}${param.required ? ' *' : ''}</label>
+                            <div class="d-flex gap-2 align-items-center">
+                                <input
+                                    type="range"
+                                    id="${op.id}-${param.name}-slider"
+                                    class="form-range flex-grow-1"
+                                    value="${defaultVal}"
+                                    min="${param.min}"
+                                    max="${param.max}"
+                                    step="${step}"
+                                    oninput="document.getElementById('${op.id}-${param.name}').value = this.value"
+                                >
+                                <input
+                                    type="number"
+                                    id="${op.id}-${param.name}"
+                                    class="form-control form-control-sm"
+                                    style="width: 80px;"
+                                    value="${defaultVal}"
+                                    min="${param.min}"
+                                    max="${param.max}"
+                                    step="${step}"
+                                    oninput="document.getElementById('${op.id}-${param.name}-slider').value = this.value"
+                                    ${param.required ? 'required' : ''}
+                                >
+                            </div>
+                        </div>
+                    `;
+            } else {
+                return `
+                        <div class="mb-2">
+                            <label class="form-label small">${param.name}${param.required ? ' *' : ''}</label>
+                            <input
+                                type="number"
+                                id="${op.id}-${param.name}"
+                                class="form-control form-control-sm"
+                                ${param.default !== undefined ? `value="${param.default}"` : ''}
+                                ${param.min !== undefined ? `min="${param.min}"` : ''}
+                                ${param.max !== undefined ? `max="${param.max}"` : ''}
+                                ${param.required ? 'required' : ''}
+                                step="any"
+                            >
+                        </div>
+                    `;
+            }
+        }).join('')}
+            <button class="btn btn-gradient text-white w-100 btn-sm" onclick="processImage('${op.id}', event)">
+                Apply ${op.name}
+            </button>
+        `;
+    }
+
+    function toggleResizeMode() {
+        const mode = document.getElementById('resize-mode').value;
+        const pixelsGroup = document.getElementById('resize-pixels-group');
+        const percentageGroup = document.getElementById('resize-percentage-group');
+
+        if (mode === 'percentage') {
+            pixelsGroup.classList.add('d-none');
+            percentageGroup.classList.remove('d-none');
+            updateResizePreview();
+        } else {
+            pixelsGroup.classList.remove('d-none');
+            percentageGroup.classList.add('d-none');
+        }
+    }
+
+    function syncPercentageFromSlider() {
+        const slider = document.getElementById('resize-percentage-slider');
+        const input = document.getElementById('resize-percentage');
+        input.value = slider.value;
+        updateResizePreview();
+    }
+
+    function syncPercentageFromInput() {
+        const slider = document.getElementById('resize-percentage-slider');
+        const input = document.getElementById('resize-percentage');
+        slider.value = input.value;
+        updateResizePreview();
+    }
+
+    function updateResizePreview() {
+        const mode = document.getElementById('resize-mode').value;
+        const previewDiv = document.getElementById('resize-preview');
+
+        if (!originalWidth || !originalHeight) {
+            previewDiv.innerHTML = 'Upload an image first';
+            return;
+        }
+
+        if (mode === 'percentage') {
+            const percentage = parseFloat(document.getElementById('resize-percentage').value) || 50;
+            const newWidth = Math.round(originalWidth * percentage / 100);
+            const newHeight = Math.round(originalHeight * percentage / 100);
+
+            previewDiv.innerHTML = `
+                    <strong>Original:</strong> ${originalWidth} × ${originalHeight}px<br>
+                    <strong>New size:</strong> ${newWidth} × ${newHeight}px<br>
+                    <strong>Scale:</strong> ${percentage}%
+                `;
+
+            // Update hidden pixel inputs
+            document.getElementById('resize-width').value = newWidth;
+            document.getElementById('resize-height').value = newHeight;
+        }
+    }
+
+    // File upload handling
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('preview');
+
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('drag-over');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith('image/')) {
+            handleFile(file);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            handleFile(file);
+        }
+    });
+
+    async function handleFile(file) {
+        currentFile = file;
+
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            preview.src = e.target.result;
+            originalImageUrl = e.target.result;
+            preview.classList.remove('d-none');
+        };
+        reader.readAsDataURL(file);
+
+        // Get metadata
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+            const response = await fetch('/api/image/metadata', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                // Store dimensions globally for resize preview
+                originalWidth = data.data.width;
+                originalHeight = data.data.height;
+
+                document.getElementById('originalMetadata').classList.remove('d-none');
+                document.getElementById('origWidth').textContent = data.data.width;
+                document.getElementById('origHeight').textContent = data.data.height;
+                document.getElementById('origFormat').textContent = data.data.format.toUpperCase();
+                document.getElementById('origSize').textContent = formatBytes(data.data.size);
+
+                // Update resize preview if in percentage mode
+                updateResizePreview();
+            }
+        } catch (error) {
+            console.error('Failed to get metadata:', error);
+        }
+    }
+
+    async function processImage(operation, event) {
+        event.stopPropagation();
+
+        if (!currentFile) {
+            showAlert('Please upload an image first', 'error');
+            return;
+        }
+
+        // Show processing overlay
+        const overlay = document.getElementById('processingOverlay');
+        const processingText = document.getElementById('processingText');
+        const opData = window.operationsData.find(op => op.id === operation);
+        processingText.textContent = `Applying ${opData ? opData.name : operation}...`;
+        overlay.classList.remove('d-none');
+
+        const formData = new FormData();
+        formData.append('image', currentFile);
+
+        // Special handling for resize operation
+        if (operation === 'resize') {
+            const width = document.getElementById('resize-width').value;
+            const height = document.getElementById('resize-height').value;
+            const fit = document.getElementById('resize-fit').value;
+
+            if (!width || !height) {
+                showAlert('Please specify width and height', 'error');
+                overlay.classList.add('d-none');
+                return;
+            }
+
+            formData.append('width', width);
+            formData.append('height', height);
+            formData.append('fit', fit);
+        } else {
+            // Get parameters for other operations
+            const opData = window.operationsData.find(op => op.id === operation);
+            if (opData && opData.params) {
+                opData.params.forEach(param => {
+                    const value = document.getElementById(`${operation}-${param.name}`).value;
+                    formData.append(param.name, value);
+                });
+            }
+        }
+
+        try {
+            const response = await fetch(`/api/image/${operation}`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error('Processing failed');
+            }
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+
+            resultBlob = blob;
+
+            // Update result image
+            document.getElementById('resultImage').src = url;
+            document.getElementById('resultArea').classList.remove('d-none');
+            document.getElementById('noResultText').classList.add('d-none');
+
+            // Update stats
+            const processingTime = response.headers.get('X-Processing-Time');
+            const workerTime = response.headers.get('X-Worker-Time');
+            const originalSize = response.headers.get('X-Original-Size');
+            const newSize = response.headers.get('X-New-Size');
+
+            document.getElementById('processingTime').textContent = parseFloat(processingTime).toFixed(2);
+            document.getElementById('workerTime').textContent = parseFloat(workerTime).toFixed(2);
+            document.getElementById('overhead').textContent = (parseFloat(processingTime) - parseFloat(workerTime)).toFixed(2);
+
+            if (originalSize && newSize) {
+                const change = ((newSize - originalSize) / originalSize * 100).toFixed(1);
+                document.getElementById('sizeChange').textContent = `${change > 0 ? '+' : ''}${change}%`;
+            } else {
+                document.getElementById('sizeChange').textContent = '-';
+            }
+
+            showAlert('✅ Image processed successfully!', 'success');
+
+        } catch (error) {
+            console.error('Processing error:', error);
+            showAlert('❌ Processing failed: ' + error.message, 'error');
+        } finally {
+            overlay.classList.add('d-none');
+        }
+    }
+
+    function downloadImage() {
+        if (!resultBlob) return;
+
+        const url = URL.createObjectURL(resultBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'processed-image.' + (resultBlob.type.split('/')[1] || 'png');
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function showAlert(message, type) {
+        const alertDiv = document.getElementById('resultAlert');
+        const alertType = type === 'error' ? 'danger' : type;
+        alertDiv.innerHTML = `<div class="alert alert-${alertType} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>`;
+        setTimeout(() => {
+            alertDiv.innerHTML = '';
+        }, 5000);
+    }
+
+    function formatBytes(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    async function useProcessedAsSource() {
+        if (!resultBlob) return;
+
+        // Convert blob to file
+        const file = new File([resultBlob], 'processed-image.' + (resultBlob.type.split('/')[1] || 'png'), {
+            type: resultBlob.type
+        });
+
+        // Use the processed image as the new source
+        await handleFile(file);
+
+        // Hide result area
+        document.getElementById('resultArea').classList.add('d-none');
+        document.getElementById('noResultText').classList.remove('d-none');
+
+        showAlert('✅ Processed image is now the source. You can apply more operations!', 'success');
+    }
+
+    // Load operations on page load
+    loadOperations();
+</script>
+</body>
+</html>

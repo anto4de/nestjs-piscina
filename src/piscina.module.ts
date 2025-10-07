@@ -1,10 +1,13 @@
 import { DynamicModule, Module } from "@nestjs/common";
 import { DiscoveryModule } from "@nestjs/core";
+import * as os from "os";
+import Piscina from "piscina";
 import { PiscinaService } from "./piscina.service";
 import { RunWithPiscinaExplorer } from "./run-with-piscina.explorer";
 import { PISCINA_OPTIONS } from "./constants";
 import { PiscinaOptions } from "./piscina.types";
 import { WorkerPathProvider } from "./worker-path.provider";
+import { PISCINA_POOL } from "./decorators/inject-piscina-pool.decorator";
 
 /**
  * Module that provides the PiscinaService and RunWithPiscinaExplorer
@@ -26,10 +29,9 @@ export class PiscinaModule {
           provide: PISCINA_OPTIONS,
           useValue: options,
         },
-        WorkerPathProvider,
-        PiscinaService,
-        RunWithPiscinaExplorer,
+        ...this.createCommonProviders(),
       ],
+      exports: [PISCINA_POOL],
     };
   }
 
@@ -52,10 +54,27 @@ export class PiscinaModule {
           useFactory: options.useFactory,
           inject: options.inject || [],
         },
-        WorkerPathProvider,
-        PiscinaService,
-        RunWithPiscinaExplorer,
+        ...this.createCommonProviders(),
       ],
+      exports: [PISCINA_POOL],
     };
+  }
+
+  private static createCommonProviders() {
+    return [
+      WorkerPathProvider,
+      {
+        provide: PISCINA_POOL,
+        useFactory: (piscinaOptions: PiscinaOptions) =>
+          new Piscina({
+            minThreads: 1,
+            maxThreads: os.availableParallelism?.() ?? os.cpus().length,
+            ...piscinaOptions,
+          }),
+        inject: [PISCINA_OPTIONS],
+      },
+      PiscinaService,
+      RunWithPiscinaExplorer,
+    ];
   }
 }
