@@ -6,46 +6,90 @@ on:
       - main
 
 permissions:
-  contents: write
-  issues: write
-  pull-requests: write
+  contents: read
+
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      sha: ${{ steps.release.outputs.sha }}
     steps:
+      - name: Check release credentials
+        env:
+          RELEASE_PLEASE_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: |
+          if [ -z "$RELEASE_PLEASE_TOKEN" ]; then
+            echo "::error::Set RELEASE_PLEASE_TOKEN to an anto4de-owned GitHub token with access to this repository. It is required for release PRs to trigger CI."
+            exit 1
+          fi
+
       - name: Release Please
         uses: googleapis/release-please-action@v4
         id: release
         with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
           release-type: node
 
-      # Build and publish to NPM when a release is created
-      - name: Checkout
-        if: ${{ steps.release.outputs.release_created }}
+  # If publishing fails, rerun only the failed job to retain the release outputs.
+  publish:
+    name: Publish to npm
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Check publishing prerequisites
+        env:
+          RELEASE_SHA: ${{ needs.release-please.outputs.sha }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -z "$RELEASE_SHA" ]; then
+            echo "::error::Release Please did not return a release SHA; refusing to publish a different revision."
+            exit 1
+          fi
+          if [ -z "$NODE_AUTH_TOKEN" ]; then
+            echo "::error::Set NPM_TOKEN before publishing."
+            exit 1
+          fi
+
+      - name: Checkout released commit
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.release-please.outputs.sha }}
+          persist-credentials: false
 
       - name: Setup Node.js
-        if: ${{ steps.release.outputs.release_created }}
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 22
+          cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
-        if: ${{ steps.release.outputs.release_created }}
         run: npm ci
 
-      - name: Build
-        if: ${{ steps.release.outputs.release_created }}
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build and pack
         run: npm run build
 
       - name: Run tests
-        if: ${{ steps.release.outputs.release_created }}
-        run: npm test
+        run: npm test -- --runInBand
 
-      - name: Publish to NPM
-        if: ${{ steps.release.outputs.release_created }}
-        run: npm publish
+      - name: Publish packed release to npm
+        run: npm publish ./nestjs-piscina.tgz
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
