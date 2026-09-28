@@ -5,8 +5,11 @@ const config: Config = {
   rootDir: "test",
   testRegex: ".*\\.spec\\.ts$",
   transform: {
-    "^.+\\.(t|j)s$": "ts-jest",
+    "^.+\\.ts$": "ts-jest",
+    "^.+\\.js$": ["@swc/jest", { jsc: { target: "es2022" } }],
   },
+  // NestJS 12 ships ESM (including import.meta); SWC handles the CJS conversion.
+  transformIgnorePatterns: ["/node_modules/(?!@nestjs/)"],
   collectCoverageFrom: ["**/*.(t|j)s"],
   coverageDirectory: "../coverage",
   testEnvironment: "node",
