@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.0](https://github.com/anto4de/nestjs-piscina/compare/v1.1.0...v1.2.0) (2026-09-28)
+
+
+### Features
+
+* support nestjs 12 and improve ci ([0451624](https://github.com/anto4de/nestjs-piscina/commit/045162481724a75db0027c3c16ecc2c419c96eac))
+* support nestjs 12 and improve ci ([0c8f234](https://github.com/anto4de/nestjs-piscina/commit/0c8f234174f47b82ed0793c1553141f4d4a60078))
+
 ## [1.1.0](https://github.com/anto4de/nestjs-piscina/compare/v1.0.0...v1.1.0) (2025-10-07)
 
 
