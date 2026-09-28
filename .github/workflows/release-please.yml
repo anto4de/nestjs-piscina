@@ -49,18 +49,14 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      id-token: write
     steps:
-      - name: Check publishing prerequisites
+      - name: Check released revision
         env:
           RELEASE_SHA: ${{ needs.release-please.outputs.sha }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           if [ -z "$RELEASE_SHA" ]; then
             echo "::error::Release Please did not return a release SHA; refusing to publish a different revision."
-            exit 1
-          fi
-          if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "::error::Set NPM_TOKEN before publishing."
             exit 1
           fi
 
@@ -75,7 +71,10 @@ jobs:
         with:
           node-version: 22
           cache: 'npm'
-          registry-url: 'https://registry.npmjs.org'
+
+      # Node 22 can bundle npm 10; trusted publishing requires npm 11.5.1+.
+      - name: Install OIDC-capable npm
+        run: npm install --global npm@11 --registry=https://registry.npmjs.org
 
       - name: Install dependencies
         run: npm ci
@@ -89,7 +88,5 @@ jobs:
       - name: Run tests
         run: npm test -- --runInBand
 
-      - name: Publish packed release to npm
-        run: npm publish ./nestjs-piscina.tgz
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish packed release with OIDC
+        run: npm publish ./nestjs-piscina.tgz --registry=https://registry.npmjs.org
