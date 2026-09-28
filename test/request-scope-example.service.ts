@@ -1,6 +1,10 @@
 import { RunWithPiscina } from "..";
 import { Injectable, Logger, Scope } from "@nestjs/common";
 import { isMainThread } from "worker_threads";
+import {
+  RequestContext,
+  RequestContextService,
+} from "./request-context.service";
 
 /**
  * Example service that demonstrates how to use the @RunWithPiscina decorator
@@ -8,6 +12,16 @@ import { isMainThread } from "worker_threads";
 @Injectable({ scope: Scope.REQUEST })
 export class RequestScopeExampleService {
   private readonly logger = new Logger(RequestScopeExampleService.name);
+
+  constructor(private readonly requestContext: RequestContextService) {}
+
+  @RunWithPiscina()
+  async inspectContext(context: RequestContext) {
+    return {
+      argumentRequestId: context.requestId,
+      ...this.requestContext.inspect(),
+    };
+  }
 
   /**
    * Calculates an approximation of Pi using the Leibniz formula.
